@@ -29,6 +29,3 @@ public class Demo {
 }
 ```
 更多示例见单元测试
-
-## 实现思路
-TODO
