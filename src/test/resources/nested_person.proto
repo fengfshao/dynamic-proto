@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+option java_package = "com.fengfshao.dynamicproto.pb3";
+option java_outer_classname = "NestedPerson";
+
+message NestedPersonMessage {
+  int32 id = 1;
+  string name = 2;
+  Gender gender = 3;
+  string email = 4;
+  repeated string address = 5;
+  repeated Dog pets = 6;
+
+  enum Gender{
+    MALE = 0;
+    FEMALE = 1;
+  }
+
+  message Dog {
+    string name = 1;
+    int32 age = 2;
+  }
+}

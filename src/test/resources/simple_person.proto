@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+option java_package = "com.fengfshao.dynamicproto.pb3";
+option java_outer_classname = "SimplePerson";
+
+message SimplePersonMessage {
+  int32 id = 1;
+  string name = 2;
+  string email = 3;
+  repeated string address = 4;
+}
