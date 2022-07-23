@@ -25,6 +25,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -53,6 +54,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author fengfshao
  */
+@SuppressWarnings("unchecked")
 public class DynamicProtoBuilder {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DynamicProtoBuilder.class);
@@ -235,7 +237,8 @@ public class DynamicProtoBuilder {
      */
     public static DynamicMessage buildMessage(String protoName, String messageName,
                                               Map<String, Object> fieldValues) {
-        DynamicMessage.Builder msgBuilder = ProtoHolder.cache.get(protoName)
+        DynamicMessage.Builder msgBuilder =  Objects.requireNonNull(ProtoHolder.cache.get(protoName),
+                        "use ProtoHolder#registerOrUpdate register your proto first!")
                 .newMessageBuilder(messageName);
         Descriptor msgDesc = msgBuilder.getDescriptorForType();
 
@@ -245,11 +248,13 @@ public class DynamicProtoBuilder {
             String fieldName = fd.getName();
             Object fieldValue = fieldValues.get(fieldName);
             if (fd.isRepeated()) {
-                List<Object> values = (List<Object>) fieldValue;
-                for (Object ele : values) {
-                    Object pbValue = getPBValue(ele, fd, protoName);
-                    if (null != pbValue) {
-                        msgBuilder.addRepeatedField(fd, pbValue);
+                if (fieldValue != null) {
+                    List<Object> values = (List<Object>) fieldValue;
+                    for (Object ele : values) {
+                        Object pbValue = getPBValue(ele, fd, protoName);
+                        if (null != pbValue) {
+                            msgBuilder.addRepeatedField(fd, pbValue);
+                        }
                     }
                 }
             } else {
@@ -260,5 +265,13 @@ public class DynamicProtoBuilder {
             }
         });
         return msgBuilder.build();
+    }
+
+    public static DynamicMessage parseMessage(String protoName, String messageName, byte[] data) throws Exception {
+        DynamicMessage.Builder msgBuilder = Objects.requireNonNull(ProtoHolder.cache.get(protoName),
+                        "use ProtoHolder#registerOrUpdate register your proto first!")
+                .newMessageBuilder(messageName);
+        Descriptor msgDesc = msgBuilder.getDescriptorForType();
+        return DynamicMessage.parseFrom(msgDesc, data);
     }
 }

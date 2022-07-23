@@ -6,12 +6,14 @@ import com.fengfshao.dynamicproto.pb3.NestedPerson.NestedPersonMessage;
 import com.fengfshao.dynamicproto.pb3.SimplePerson.SimplePersonMessage;
 import com.fengfshao.dynamicproto.pb3.SimplePersonV2;
 import com.fengfshao.dynamicproto.pb3.SimplePersonV2.SimplePersonMessageV2;
+import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.Message;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -19,6 +21,7 @@ import java.util.Map;
  *
  * @author fengfshao
  */
+@SuppressWarnings("unchecked")
 public class DynamicProtoBuilderTest {
 
     /**
@@ -97,7 +100,7 @@ public class DynamicProtoBuilderTest {
         pet2.put("name", "Q");
         pet2.put("age", "5");
 
-        fieldValues.put("pets", Arrays.asList(pet1, pet2));
+        //fieldValues.put("pets", Arrays.asList(pet1, pet2));
 
         Message dynamicMessage = DynamicProtoBuilder
                 .buildMessage("nested_person.proto", "NestedPersonMessage", fieldValues);
@@ -163,5 +166,33 @@ public class DynamicProtoBuilderTest {
                 , parsed.getPets(1));
 
         Assert.assertEquals(Arrays.asList("address1", "address2", "address3"), parsed.getAddressList());
+    }
+
+    @Test
+    public void parseMessage() throws Exception {
+        DynamicProtoBuilder.ProtoHolder.registerOrUpdate(
+                Thread.currentThread().getContextClassLoader()
+                        .getResource("nested_person.proto").openStream(), "nested_person.proto");
+
+        MultiplePersonMessage.Builder builder = MultiplePersonMessage.newBuilder();
+        builder.setName("jihite")
+                .setEmail("jihite@jihite.com")
+                .setGender(MultiplePerson.Gender.FEMALE);
+
+        builder.addPets(MultiplePerson.Dog.newBuilder().setName("Q").build());
+        byte[] data = builder.build().toByteArray();
+
+        DynamicMessage message = DynamicProtoBuilder.parseMessage("nested_person.proto",
+                "NestedPersonMessage", data);
+        String name = (String) message.getAllFields()
+                .get(message.getDescriptorForType().findFieldByName("name"));
+        Assert.assertEquals("jihite", name);
+        String email = (String) message.getAllFields()
+                .get(message.getDescriptorForType().findFieldByName("email"));
+        Assert.assertEquals("jihite@jihite.com", email);
+        List<DynamicMessage> pets = (List<DynamicMessage>) message.getField(
+                message.getDescriptorForType().findFieldByName("pets"));
+        Assert.assertEquals("Q",
+                pets.get(0).getField(pets.get(0).getDescriptorForType().findFieldByName("name")));
     }
 }
